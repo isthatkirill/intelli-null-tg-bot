@@ -1,7 +1,7 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
 import isthatkirill.IntelliNullBot.bot.config.BotConfig;
-import isthatkirill.IntelliNullBot.weather.WeatherService;
+import isthatkirill.IntelliNullBot.bot.model.BotState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static isthatkirill.IntelliNullBot.bot.service.BotState.WAITING_CITY;
+import static isthatkirill.IntelliNullBot.bot.model.BotState.WAITING_CITY;
+import static isthatkirill.IntelliNullBot.bot.model.BotState.WAITING_EXPRESSION;
 
 @Slf4j
 @Component
@@ -29,8 +30,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Autowired
     private UserService userService;
+
     @Autowired
     private WeatherService weatherService;
+
+    @Autowired
+    private CalculatorService calculatorService;
+
     private final BotConfig botConfig;
 
     private Map<Long, BotState> userStates = new HashMap<>();
@@ -65,6 +71,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } else if ("/weather".equals(messageText)) {
                         sendMessage( "Enter your city", message);
                         setUserState(chatId, WAITING_CITY);
+                    } else if ("/calculator".equals(messageText)) {
+                        sendMessage( "Enter your expression. Available operations:\n[+] addition\n[-] subtraction\n" +
+                                "[*] multiplication\n[/] division\n[^] exponentiation\n[()] brackets", message);
+                        setUserState(chatId, WAITING_EXPRESSION);
                     } else if ("/about".equals(messageText)) {
                         aboutReceived(message);
                     } else {
@@ -77,25 +87,38 @@ public class TelegramBot extends TelegramLongPollingBot {
                         setUserState(chatId, BotState.DEFAULT);
                         break;
                     }
-                    processWeather(messageText, message);
+                    getWeather(message);
+                    setUserState(chatId, BotState.DEFAULT);
+                    break;
+                case WAITING_EXPRESSION:
+                    if ("Go back".equals(messageText) || "/start".equals(messageText)) {
+                        sendMessage("What do you want to do?", message);
+                        setUserState(chatId, BotState.DEFAULT);
+                        break;
+                    }
+                    solveExpression(message);
                     setUserState(chatId, BotState.DEFAULT);
                     break;
             }
         }
     }
 
+    private void solveExpression(Message message) {
+        sendMessage(calculatorService.calculate(message.getText()), message);
+    }
+
     private void aboutReceived(Message message) {
         sendMessage( "The bot is created by @isthatkirill", message);
     }
 
-    private void processWeather(String city, Message message) {
-        sendMessage( weatherService.getWeather(city), message);
+    private void getWeather(Message message) {
+        sendMessage( weatherService.getWeather(message.getText()), message);
     }
-    private BotState getUserState(long chatId) {
+    private BotState getUserState(Long chatId) {
         return userStates.getOrDefault(chatId, BotState.DEFAULT);
     }
 
-    private void setUserState(long chatId, BotState state) {
+    private void setUserState(Long chatId, BotState state) {
         userStates.put(chatId, state);
     }
 
@@ -132,7 +155,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         KeyboardRow row = new KeyboardRow();
         String text = message.getText();
 
-        if (text.equals("/weather")) {
+        if (text.equals("/weather") || text.equals("/calculator")) {
             row.add("Go back");
             keyboardRows.add(row);
         } else {

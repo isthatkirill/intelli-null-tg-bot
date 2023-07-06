@@ -1,4 +1,4 @@
-package isthatkirill.IntelliNullBot.web;
+package isthatkirill.IntelliNullBot.bot.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

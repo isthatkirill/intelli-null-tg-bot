@@ -1,6 +1,6 @@
-package isthatkirill.IntelliNullBot.weather;
+package isthatkirill.IntelliNullBot.bot.service;
 
-import isthatkirill.IntelliNullBot.web.HttpService;
+import isthatkirill.IntelliNullBot.bot.util.HttpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
