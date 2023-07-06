@@ -1,4 +1,4 @@
-package isthatkirill.IntelliNullBot.config;
+package isthatkirill.IntelliNullBot.bot.config;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
