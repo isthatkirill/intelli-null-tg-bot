@@ -1,7 +1,11 @@
-package isthatkirill.IntelliNullBot.bot.service;
+package isthatkirill.IntelliNullBot.bot.telegram;
 
 import isthatkirill.IntelliNullBot.bot.config.BotConfig;
 import isthatkirill.IntelliNullBot.bot.model.BotState;
+import isthatkirill.IntelliNullBot.bot.service.CalculatorService;
+import isthatkirill.IntelliNullBot.bot.service.UserService;
+import isthatkirill.IntelliNullBot.bot.service.WeatherService;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -14,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,17 +44,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private Map<Long, BotState> userStates = new HashMap<>();
 
+    @SneakyThrows
     public TelegramBot(BotConfig botConfig) {
         this.botConfig = botConfig;
 
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/start", START));
 
-        try {
-            this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
-        } catch (TelegramApiException e) {
-            log.error(e.getMessage());
-        }
+        this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
     }
 
     @Override
@@ -74,6 +74,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         calculatorReceived(message);
                     } else if ("/about".equals(messageText)) {
                         aboutReceived(message);
+                    } else if ("/history".equals(messageText)) {
+                        historyReceived(message);
                     } else {
                         notSupportedReceived(message);
                     }
@@ -96,19 +98,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void goBackReceived(Message message) {
-        Long chatId = message.getChatId();
-        log.info("[Go back] received by user with chatId={}(username={})", chatId,
-                message.getChat().getUserName());
-        setUserState(chatId, BotState.DEFAULT);
-        sendMessage(WHAT_DO_U_DO, message);
+    @Override
+    public String getBotUsername() {
+        return botConfig.getName();
     }
 
-    private void solveExpression(Message message) {
+    @Override
+    public String getBotToken() {
+        return botConfig.getToken();
+    }
+
+    public void solveExpression(Message message) {
         Long chatId = message.getChatId();
         log.info("[calculator] Expression received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
-        sendMessage(calculatorService.calculate(message.getText()), message);
+        sendMessage(calculatorService.calculate(message.getText(), chatId), message);
+    }
+
+    public void getWeather(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[weather] City received by user with chatId={}(username={})", chatId,
+                message.getChat().getUserName());
+        sendMessage(weatherService.getWeather(message.getText(), chatId), message);
     }
 
     private void calculatorReceived(Message message) {
@@ -119,12 +130,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         setUserState(chatId, WAITING_EXPRESSION);
     }
 
-    public void weatherReceived(Message message) {
+    private void weatherReceived(Message message) {
         Long chatId = message.getChatId();
         log.info("[pre-weather] received by user with chatId={}(username={}), waiting for a city", chatId,
                 message.getChat().getUserName());
         sendMessage(ENTER_CITY, message);
         setUserState(chatId, WAITING_CITY);
+    }
+
+    private void goBackReceived(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[Go back] received by user with chatId={}(username={})", chatId,
+                message.getChat().getUserName());
+        setUserState(chatId, BotState.DEFAULT);
+        sendMessage(WHAT_DO_U_DO, message);
     }
 
     private void notSupportedReceived(Message message) {
@@ -133,16 +152,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(COMMAND_NOT_AVAILABLE, message);
     }
 
-    private void getWeather(Message message) {
-        Long chatId = message.getChatId();
-        log.info("[weather] City received by user with chatId={}(username={})", chatId,
-                message.getChat().getUserName());
-        sendMessage(weatherService.getWeather(message.getText()), message);
-    }
-
     private void aboutReceived(Message message) {
         log.info("[about] received by user with chatId={}", message.getChatId());
         sendMessage(CREATED_BY, message);
+    }
+
+    private void historyReceived(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[history] received by user with chatId={}", chatId);
+        sendMessage(userService.getCallsByChatId(chatId), message);
     }
 
     private void startReceived(Message message) {
@@ -173,12 +191,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(sendMessage);
     }
 
+    @SneakyThrows
     private void executeMessage(SendMessage message) {
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error(e.getMessage());
-        }
+        execute(message);
     }
 
     private void showButtons(Message message, SendMessage sendMessage) {
@@ -203,21 +218,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             keyboardRows.add(row);
             row = new KeyboardRow();
             row.add("/calculator");
+            row.add("/history");
             row.add("/about");
             keyboardRows.add(row);
         }
 
         keyboardMarkup.setKeyboard(keyboardRows);
         sendMessage.setReplyMarkup(keyboardMarkup);
-    }
-
-    @Override
-    public String getBotUsername() {
-        return botConfig.getName();
-    }
-
-    @Override
-    public String getBotToken() {
-        return botConfig.getToken();
     }
 }

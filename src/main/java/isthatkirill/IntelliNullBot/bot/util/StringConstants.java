@@ -22,7 +22,10 @@ public class StringConstants {
             .parseToUnicode("The bot is created by @isthatkirill:revolving_hearts:");
 
     public static final String INTRO = EmojiParser
-            .parseToUnicode(", nice too meet уou! What do you want to do?:eyes:");
+            .parseToUnicode(", nice too meet уou! What do you want to do?:eyes:\n" +
+                    "/weather - find out the weather in any city\n" +
+                    "/calculator - solve the expression\n" +
+                    "/history - look at the last 10 uses of me");
 
     public static final String START = "Start the bot!";
 
@@ -30,7 +33,7 @@ public class StringConstants {
             .parseToUnicode("What do you want to do?:eyes:");
 
     public static final List<String> COMMANDS = List.of("/start", "/weather", "/calculator",
-            "Go back", "/about");
+            "Go back", "/about", "/history");
 
     public static final Map<String, String> EMOJI = new HashMap<>(12) {{
         put("Thunder", ":thunder_cloud_rain:");

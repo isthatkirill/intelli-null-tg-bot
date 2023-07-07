@@ -1,6 +1,5 @@
-package isthatkirill.IntelliNullBot.bot.config;
+package isthatkirill.IntelliNullBot.bot.telegram;
 
-import isthatkirill.IntelliNullBot.bot.service.TelegramBot;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.context.event.ContextRefreshedEvent;

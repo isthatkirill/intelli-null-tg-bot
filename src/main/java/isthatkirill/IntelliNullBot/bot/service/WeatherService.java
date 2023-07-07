@@ -1,6 +1,7 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
 import com.vdurmont.emoji.EmojiParser;
+import isthatkirill.IntelliNullBot.bot.aspect.TrackMethodCall;
 import isthatkirill.IntelliNullBot.bot.util.HttpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,8 @@ public class WeatherService {
 
     private final HttpService httpService;
 
-    public String getWeather(String city) {
+    @TrackMethodCall(value = "/weather", argNames = {"city", "chatId"})
+    public String getWeather(String city, Long chatId) {
         String response;
         try {
             response =

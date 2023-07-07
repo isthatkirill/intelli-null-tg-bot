@@ -1,5 +1,6 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
+import isthatkirill.IntelliNullBot.bot.aspect.TrackMethodCall;
 import lombok.extern.slf4j.Slf4j;
 import org.nfunk.jep.JEP;
 import org.springframework.stereotype.Service;
@@ -7,7 +8,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class CalculatorService {
-    public String calculate(String expression) {
+
+    @TrackMethodCall(value = "/calculator", argNames = {"city", "chatId"})
+    public String calculate(String expression, Long chatId) {
         JEP jep = new JEP();
         jep.parseExpression(expression);
         if (jep.hasError()) {
