@@ -19,5 +19,4 @@ public class IntelliNullBotApplication {
         return new RestTemplate();
     }
 
-
 }

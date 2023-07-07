@@ -36,6 +36,17 @@ public class StringConstants {
     public static final List<String> COMMANDS = List.of("/start", "/weather", "/calculator",
             "Go back", "/about", "/history", "/translate");
 
+    public static final String FIND_USER_BY_ID = "SELECT COUNT(*) FROM users WHERE chat_id = ?";
+
+    public static final String FIND_CALLS_BY_ID = "SELECT b.* " +
+            "FROM bot_calls b " +
+            "JOIN users u ON b.chat_id = u.chat_id " +
+            "WHERE b.chat_id = ? " +
+            "ORDER BY b.called_at DESC " +
+            "LIMIT 10";
+
+    public static final String INVALID_EXPRESSION = "Invalid expression. Please try again.";
+
     public static final Map<String, String> EMOJI = new HashMap<>(12) {{
         put("Thunder", ":thunder_cloud_rain:");
         put("Sunny", ":sunny:");
@@ -50,16 +61,7 @@ public class StringConstants {
         put("Moderate or heavy rain with thunder", ":thunder_cloud_rain:");
     }};
 
-    public static final Map<String, String> LANGUAGES_CODES = new HashMap<>(10) {{
-        put("Russian", "rus_Cyrl");
-        put("English", "eng_Latn");
-        put("French", "fra_Latn");
-        put("Portuguese", "por_Latn");
-        put("Chinese", "zho_Hant");
-        put("Italian", "ita_Latn");
-        put("Belarusian", "bel_Cyrl");
-        put("Ukrainian", "ukr_Cyrl");
-        put("Spanish", "spa_Latn");
-    }};
+    public static final Map<String, String> LANGUAGES_CODES =
+            Map.of("RUS", "rus_Cyrl", "ENG", "eng_Latn");
 
 }

@@ -139,25 +139,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
 
-        rowInline.add(InlineKeyboardButton.builder().text("Russian").callbackData("Russian").build());
-        rowInline.add(InlineKeyboardButton.builder().text("English").callbackData("English").build());
-        rowInline.add(InlineKeyboardButton.builder().text("French").callbackData("French").build());
+        rowInline.add(InlineKeyboardButton.builder().text("RUS -> ENG").callbackData("RUS-ENG").build());
+        rowInline.add(InlineKeyboardButton.builder().text("ENG -> RUS").callbackData("ENG-RUS").build());
+
         rowsInline.add(rowInline);
 
         rowInline = new ArrayList<>();
-
-        rowInline.add(InlineKeyboardButton.builder().text("Portuguese").callbackData("Portuguese").build());
-        rowInline.add(InlineKeyboardButton.builder().text("Chinese").callbackData("Chinese").build());
-        rowInline.add(InlineKeyboardButton.builder().text("Italian").callbackData("Italian").build());
-        rowsInline.add(rowInline);
-
-        rowInline = new ArrayList<>();
-
-        rowInline.add(InlineKeyboardButton.builder().text("Belarusian").callbackData("Belarusian").build());
-        rowInline.add(InlineKeyboardButton.builder().text("Ukrainian").callbackData("Ukrainian").build());
-        rowInline.add(InlineKeyboardButton.builder().text("Spanish").callbackData("Spanish").build());
-
-        rowsInline.add(rowInline);
 
         rowsInline.add(rowInline);
         markupInline.setKeyboard(rowsInline);
@@ -176,14 +163,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         return botConfig.getToken();
     }
 
-    public void solveExpression(Message message) {
+    private void solveExpression(Message message) {
         Long chatId = message.getChatId();
         log.info("[calculator] Expression received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
         sendMessage(calculatorService.calculate(message.getText(), chatId), message);
     }
 
-    public void getWeather(Message message) {
+    private void getWeather(Message message) {
         Long chatId = message.getChatId();
         log.info("[weather] City received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());

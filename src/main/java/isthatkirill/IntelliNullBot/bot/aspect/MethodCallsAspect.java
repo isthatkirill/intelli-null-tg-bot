@@ -16,11 +16,20 @@ public class MethodCallsAspect {
     private final UserService userService;
 
     @Pointcut("@annotation(trackMethodCall) && args(text, id)")
-    public void trackMethodCallPointcut(TrackMethodCall trackMethodCall, String text, Long id) {
+    public void pointcutShort(TrackMethodCall trackMethodCall, String text, Long id) {
     }
 
-    @After("trackMethodCallPointcut(trackMethodCall, text, id)")
+    @Pointcut("@annotation(trackMethodCall) && args(text, lang, id)")
+    public void pointcutLong(TrackMethodCall trackMethodCall, String text, String lang, Long id) {
+    }
+
+    @After("pointcutShort(trackMethodCall, text, id)")
     public void afterMethodCall(JoinPoint joinPoint, TrackMethodCall trackMethodCall, String text, Long id) {
+        userService.saveCall(trackMethodCall.value(), text, id);
+    }
+
+    @After("pointcutLong(trackMethodCall, text, lang, id)")
+    public void afterMethodCall(JoinPoint joinPoint, TrackMethodCall trackMethodCall, String text, String lang, Long id) {
         userService.saveCall(trackMethodCall.value(), text, id);
     }
 

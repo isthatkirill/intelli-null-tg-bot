@@ -23,8 +23,8 @@ public class TranslatorService {
     private String requestTranslation(String text, String lang) {
         JSONObject requestBody = new JSONObject();
         requestBody.put("text", text);
-        requestBody.put("source", "");
-        requestBody.put("target", lang);
+        requestBody.put("source", LANGUAGES_CODES.get(lang.split("-")[0]));
+        requestBody.put("target", LANGUAGES_CODES.get(lang.split("-")[1]));
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.nlpcloud.io/v1/nllb-200-3-3b/translation"))
@@ -41,6 +41,6 @@ public class TranslatorService {
     @TrackMethodCall(value = "/translate", argNames = {"text", "chatId"})
     public String translate(String text, String lang, Long chatId) {
         log.info("[translator] User with chatId={} wants translate text={} into lang={}", chatId, text, lang);
-        return requestTranslation(text, LANGUAGES_CODES.get(lang));
+        return requestTranslation(text, lang);
     }
 }
