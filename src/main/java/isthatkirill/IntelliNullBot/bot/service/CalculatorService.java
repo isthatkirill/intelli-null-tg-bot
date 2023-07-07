@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CalculatorService {
 
-    @TrackMethodCall(value = "/calculator", argNames = {"city", "chatId"})
+    @TrackMethodCall(value = "/calculator", argNames = {"expression", "chatId"})
     public String calculate(String expression, Long chatId) {
         JEP jep = new JEP();
         jep.parseExpression(expression);
@@ -17,7 +17,7 @@ public class CalculatorService {
             log.warn("[calculator] Invalid expression {}. Please try again.", expression);
             return "Invalid expression. Please try again.";
         }
-        return String.valueOf(jep.getValue());
+        return expression + " = " + jep.getValue();
     }
 
 }

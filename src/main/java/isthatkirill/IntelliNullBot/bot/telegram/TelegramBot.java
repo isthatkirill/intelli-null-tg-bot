@@ -3,6 +3,7 @@ package isthatkirill.IntelliNullBot.bot.telegram;
 import isthatkirill.IntelliNullBot.bot.config.BotConfig;
 import isthatkirill.IntelliNullBot.bot.model.BotState;
 import isthatkirill.IntelliNullBot.bot.service.CalculatorService;
+import isthatkirill.IntelliNullBot.bot.service.TranslatorService;
 import isthatkirill.IntelliNullBot.bot.service.UserService;
 import isthatkirill.IntelliNullBot.bot.service.WeatherService;
 import lombok.SneakyThrows;
@@ -12,11 +13,14 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.util.ArrayList;
@@ -40,9 +44,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Autowired
     private CalculatorService calculatorService;
 
+    @Autowired
+    private TranslatorService translatorService;
+
     private final BotConfig botConfig;
 
     private Map<Long, BotState> userStates = new HashMap<>();
+    private Map<Long, String> textToTranslate = new HashMap<>();
 
     @SneakyThrows
     public TelegramBot(BotConfig botConfig) {
@@ -76,6 +84,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         aboutReceived(message);
                     } else if ("/history".equals(messageText)) {
                         historyReceived(message);
+                    } else if ("/translate".equals(messageText)) {
+                        translateReceived(message);
                     } else {
                         notSupportedReceived(message);
                     }
@@ -94,8 +104,66 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                     solveExpression(message);
                     break;
+                case WAITING_TEXT:
+                    if (COMMANDS.contains(messageText)) {
+                        goBackReceived(message);
+                        textToTranslate.remove(chatId);
+                        break;
+                    }
+                    textToTranslate.put(chatId, messageText);
+                    inlineButtonCall(message);
+                    break;
             }
+        } else if (update.hasCallbackQuery()) {
+            String callBackData = update.getCallbackQuery().getData();
+            Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
+
+            EditMessageText editedMessage = new EditMessageText();
+            editedMessage.setChatId(String.valueOf(chatId));
+            editedMessage.setMessageId(messageId);
+
+            editedMessage.setText(translatorService.translate(textToTranslate.get(chatId), callBackData, chatId));
+            textToTranslate.remove(chatId);
+
+            executeMessage(editedMessage);
         }
+    }
+
+    private void inlineButtonCall(Message message) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(message.getChatId()));
+        sendMessage.setText("Select a language available for translation: ");
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        rowInline.add(InlineKeyboardButton.builder().text("Russian").callbackData("Russian").build());
+        rowInline.add(InlineKeyboardButton.builder().text("English").callbackData("English").build());
+        rowInline.add(InlineKeyboardButton.builder().text("French").callbackData("French").build());
+        rowsInline.add(rowInline);
+
+        rowInline = new ArrayList<>();
+
+        rowInline.add(InlineKeyboardButton.builder().text("Portuguese").callbackData("Portuguese").build());
+        rowInline.add(InlineKeyboardButton.builder().text("Chinese").callbackData("Chinese").build());
+        rowInline.add(InlineKeyboardButton.builder().text("Italian").callbackData("Italian").build());
+        rowsInline.add(rowInline);
+
+        rowInline = new ArrayList<>();
+
+        rowInline.add(InlineKeyboardButton.builder().text("Belarusian").callbackData("Belarusian").build());
+        rowInline.add(InlineKeyboardButton.builder().text("Ukrainian").callbackData("Ukrainian").build());
+        rowInline.add(InlineKeyboardButton.builder().text("Spanish").callbackData("Spanish").build());
+
+        rowsInline.add(rowInline);
+
+        rowsInline.add(rowInline);
+        markupInline.setKeyboard(rowsInline);
+        sendMessage.setReplyMarkup(markupInline);
+
+        executeMessage(sendMessage);
     }
 
     @Override
@@ -128,6 +196,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 message.getChat().getUserName());
         sendMessage(ENTER_EXPRESSION, message);
         setUserState(chatId, WAITING_EXPRESSION);
+    }
+
+    private void translateReceived(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[pre-translate] received by user with chatId={}(username={}), waiting for text", chatId,
+                message.getChat().getUserName());
+        sendMessage("Write the text that you need to translate", message);
+        setUserState(chatId, WAITING_TEXT);
     }
 
     private void weatherReceived(Message message) {
@@ -196,6 +272,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         execute(message);
     }
 
+    @SneakyThrows
+    private void executeMessage(EditMessageText message) {
+        execute(message);
+    }
+
     private void showButtons(Message message, SendMessage sendMessage) {
 
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
@@ -205,7 +286,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         KeyboardRow row = new KeyboardRow();
         String text = message.getText();
 
-        if (text.equals("/weather") || text.equals("/calculator")) {
+        if (text.equals("/weather") || text.equals("/calculator") || text.equals("/translate")) {
             row.add("Go back");
             keyboardRows.add(row);
         } else if (!getUserState(message.getChatId()).name().equals(DEFAULT.name())) {
