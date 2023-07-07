@@ -21,8 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static isthatkirill.IntelliNullBot.bot.model.BotState.WAITING_CITY;
-import static isthatkirill.IntelliNullBot.bot.model.BotState.WAITING_EXPRESSION;
+import static isthatkirill.IntelliNullBot.bot.model.BotState.*;
+import static isthatkirill.IntelliNullBot.bot.util.StringConstants.*;
 
 @Slf4j
 @Component
@@ -40,12 +40,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
 
     private Map<Long, BotState> userStates = new HashMap<>();
+    List<String> commands = List.of("/start", "/weather", "/calculator",
+            "Go back", "/about");
 
     public TelegramBot(BotConfig botConfig) {
         this.botConfig = botConfig;
 
         List<BotCommand> listOfCommands = new ArrayList<>();
-        listOfCommands.add(new BotCommand("/start", "Start the bot!"));
+        listOfCommands.add(new BotCommand("/start", START));
 
         try {
             this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
@@ -69,64 +71,97 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if ("/start".equals(messageText)) {
                         startReceived(message);
                     } else if ("/weather".equals(messageText)) {
-                        sendMessage( "Enter your city", message);
-                        setUserState(chatId, WAITING_CITY);
+                        weatherReceived(message);
                     } else if ("/calculator".equals(messageText)) {
-                        sendMessage( "Enter your expression. Available operations:\n[+] addition\n[-] subtraction\n" +
-                                "[*] multiplication\n[/] division\n[^] exponentiation\n[()] brackets", message);
-                        setUserState(chatId, WAITING_EXPRESSION);
+                        calculatorReceived(message);
                     } else if ("/about".equals(messageText)) {
                         aboutReceived(message);
                     } else {
-                        sendMessage("Such a command is not yet available!", message);
+                        notSupportedReceived(message);
                     }
                     break;
                 case WAITING_CITY:
-                    if ("Go back".equals(messageText) || "/start".equals(messageText)) {
-                        sendMessage("What do you want to do?", message);
-                        setUserState(chatId, BotState.DEFAULT);
+                    if (commands.contains(messageText)) {
+                        goBackReceived(message);
                         break;
                     }
                     getWeather(message);
-                    setUserState(chatId, BotState.DEFAULT);
                     break;
                 case WAITING_EXPRESSION:
-                    if ("Go back".equals(messageText) || "/start".equals(messageText)) {
-                        sendMessage("What do you want to do?", message);
-                        setUserState(chatId, BotState.DEFAULT);
+                    if (commands.contains(messageText)) {
+                        goBackReceived(message);
                         break;
                     }
                     solveExpression(message);
-                    setUserState(chatId, BotState.DEFAULT);
                     break;
             }
         }
     }
 
+    private void goBackReceived(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[Go back] received by user with chatId={}(username={})", chatId,
+                message.getChat().getUserName());
+        setUserState(chatId, BotState.DEFAULT);
+        sendMessage(WHAT_DO_U_DO, message);
+    }
+
     private void solveExpression(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[calculator] Expression received by user with chatId={}(username={})", chatId,
+                message.getChat().getUserName());
         sendMessage(calculatorService.calculate(message.getText()), message);
     }
 
-    private void aboutReceived(Message message) {
-        sendMessage( "The bot is created by @isthatkirill", message);
+    private void calculatorReceived(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[pre-calculator] received by user with chatId={}(username={}), waiting for expression",chatId,
+                message.getChat().getUserName());
+        sendMessage( ENTER_EXPRESSION, message);
+        setUserState(chatId, WAITING_EXPRESSION);
+    }
+
+    public void weatherReceived(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[pre-weather] received by user with chatId={}(username={}), waiting for a city", chatId,
+                message.getChat().getUserName());
+        sendMessage(ENTER_CITY, message);
+        setUserState(chatId, WAITING_CITY);
+    }
+
+    private void notSupportedReceived(Message message) {
+        log.info("[NOT_SUPPORTED] received by user with chatId={}(username={})", message.getChatId(),
+                message.getChat().getUserName());
+        sendMessage( COMMAND_NOT_AVAILABLE, message);
     }
 
     private void getWeather(Message message) {
+        Long chatId = message.getChatId();
+        log.info("[weather] City received by user with chatId={}(username={})", chatId,
+                message.getChat().getUserName());
         sendMessage( weatherService.getWeather(message.getText()), message);
     }
+
+    private void aboutReceived(Message message) {
+        log.info("[about] received by user with chatId={}", message.getChatId());
+        sendMessage( CREATED_BY, message);
+    }
+    private void startReceived(Message message) {
+        log.info("[start] received by user with chatId={}(username={})", message.getChatId(),
+                message.getChat().getUserName());
+        String answer = "Hello, " + message.getChat().getUserName() + INTRO;
+        userService.save(message);
+        sendMessage( answer, message);
+    }
+
     private BotState getUserState(Long chatId) {
+        log.info("Bot's state for user with chatId={} now is {}", chatId, BotState.DEFAULT);
         return userStates.getOrDefault(chatId, BotState.DEFAULT);
     }
 
     private void setUserState(Long chatId, BotState state) {
+        log.info("Bot's state for user with chatId={} now is {}", chatId, state);
         userStates.put(chatId, state);
-    }
-
-    private void startReceived(Message message) {
-        String answer = "Hello, " + message.getChat().getUserName() +
-                ", nice too meet уou! What do you want to do?";
-        userService.save(message);
-        sendMessage( answer, message);
     }
 
     private void sendMessage(String textToSend, Message message) {
@@ -156,6 +191,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         String text = message.getText();
 
         if (text.equals("/weather") || text.equals("/calculator")) {
+            row.add("Go back");
+            keyboardRows.add(row);
+        } else if (!getUserState(message.getChatId()).name().equals(DEFAULT.name())) {
             row.add("Go back");
             keyboardRows.add(row);
         } else {
