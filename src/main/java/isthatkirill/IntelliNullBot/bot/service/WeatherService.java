@@ -11,6 +11,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.text.DecimalFormat;
 
+import static isthatkirill.IntelliNullBot.bot.util.StringConstants.EMOJI;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -46,13 +48,16 @@ public class WeatherService {
             JSONObject forecastDayObject = forecastDayArray.getJSONObject(i);
             JSONObject dayObject = forecastDayObject.getJSONObject("day");
 
-            sb.append("\n:calendar: Date: ").append(forecastDayObject.getString("date"));
-            sb.append("\n:temperature: Temperature (°C): ").append(dayObject.getDouble("avgtemp_c"));
-            sb.append("\n:dash: Wind speed (mps): ").append(decimalFormat.format(dayObject.getDouble("maxwind_kph") / 3.6));
-            sb.append("\n:eye: Visibility (km): ").append(dayObject.getDouble("avgvis_km"));
-            sb.append("\n:droplet: Humidity (%): ").append(dayObject.getDouble("avghumidity"));
-            sb.append("\n:hotsprings: UV Index: ").append(dayObject.getDouble("uv"));
-            sb.append("\nCondition: ").append(dayObject.getJSONObject("condition").getString("text"));
+            sb.append("\n:calendar:Date: ").append(forecastDayObject.getString("date"));
+            sb.append("\n:temperature:Temperature (°C): ").append(dayObject.getDouble("avgtemp_c"));
+            sb.append("\n:dash:Wind speed (mps): ").append(decimalFormat.format(dayObject.getDouble("maxwind_kph") / 3.6));
+            sb.append("\n:eye:Visibility (km): ").append(dayObject.getDouble("avgvis_km"));
+            sb.append("\n:droplet:Humidity (%): ").append(dayObject.getDouble("avghumidity"));
+            sb.append("\n:hotsprings:UV Index: ").append(dayObject.getDouble("uv"));
+
+            String condition = dayObject.getJSONObject("condition").getString("text");
+
+            sb.append("\n").append(EMOJI.get(condition)).append("Condition: ").append(condition);
             sb.append("\n-----------------------------------");
         }
 
