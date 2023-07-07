@@ -10,7 +10,10 @@ public class CalculatorService {
     public String calculate(String expression) {
         JEP jep = new JEP();
         jep.parseExpression(expression);
-        if (jep.hasError()) return "Invalid expression. Please try again.";
+        if (jep.hasError()) {
+            log.warn("[calculator] Invalid expression {}. Please try again.", expression);
+            return "Invalid expression. Please try again.";
+        }
         return String.valueOf(jep.getValue());
     }
 

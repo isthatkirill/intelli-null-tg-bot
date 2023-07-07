@@ -19,11 +19,11 @@ public class UserService {
 
     public void save(Message message) {
         if (userRepository.checkIfRegistered(message.getChatId())) {
-            log.info("User {} already registered", message.getChat().getUserName());
+            log.info("[user-db] User {} already registered", message.getChat().getUserName());
             return;
         }
         Long id = userRepository.save(buildUser(message));
-        log.info("User {} added to the db with id={}", message.getChat().getUserName(), id);
+        log.info("[user-db] User {} added to the db with id={}", message.getChat().getUserName(), id);
     }
 
     private User buildUser(Message message) {

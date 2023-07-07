@@ -1,5 +1,6 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
+import com.vdurmont.emoji.EmojiParser;
 import isthatkirill.IntelliNullBot.bot.util.HttpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class WeatherService {
                             "forecast.json?key=b9a4ed35b7e0422a906153641230607&q=" + city + "&days=3&aqi=no&alerts=no");
             return parse(response);
         } catch (HttpClientErrorException e) {
+            log.warn("[weather] There is no such city or API doesnt response");
             response = "There is no such city";
             return response;
         }
@@ -44,17 +46,17 @@ public class WeatherService {
             JSONObject forecastDayObject = forecastDayArray.getJSONObject(i);
             JSONObject dayObject = forecastDayObject.getJSONObject("day");
 
-            sb.append("\nDate: ").append(forecastDayObject.getString("date"));
-            sb.append("\nTemperature (°C): ").append(dayObject.getDouble("avgtemp_c"));
-            sb.append("\nWind speed (mps): ").append(decimalFormat.format(dayObject.getDouble("maxwind_kph") / 3.6));
-            sb.append("\nVisibility (km): ").append(dayObject.getDouble("avgvis_km"));
-            sb.append("\nHumidity (%): ").append(dayObject.getDouble("avghumidity"));
-            sb.append("\nUV Index: ").append(dayObject.getDouble("uv"));
+            sb.append("\n:calendar: Date: ").append(forecastDayObject.getString("date"));
+            sb.append("\n:temperature: Temperature (°C): ").append(dayObject.getDouble("avgtemp_c"));
+            sb.append("\n:dash: Wind speed (mps): ").append(decimalFormat.format(dayObject.getDouble("maxwind_kph") / 3.6));
+            sb.append("\n:eye: Visibility (km): ").append(dayObject.getDouble("avgvis_km"));
+            sb.append("\n:droplet: Humidity (%): ").append(dayObject.getDouble("avghumidity"));
+            sb.append("\n:hotsprings: UV Index: ").append(dayObject.getDouble("uv"));
             sb.append("\nCondition: ").append(dayObject.getJSONObject("condition").getString("text"));
             sb.append("\n-----------------------------------");
         }
 
-        return sb.toString();
+        return EmojiParser.parseToUnicode(sb.toString());
     }
 
 }

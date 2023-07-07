@@ -40,8 +40,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
 
     private Map<Long, BotState> userStates = new HashMap<>();
-    List<String> commands = List.of("/start", "/weather", "/calculator",
-            "Go back", "/about");
 
     public TelegramBot(BotConfig botConfig) {
         this.botConfig = botConfig;
@@ -81,14 +79,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                     break;
                 case WAITING_CITY:
-                    if (commands.contains(messageText)) {
+                    if (COMMANDS.contains(messageText)) {
                         goBackReceived(message);
                         break;
                     }
                     getWeather(message);
                     break;
                 case WAITING_EXPRESSION:
-                    if (commands.contains(messageText)) {
+                    if (COMMANDS.contains(messageText)) {
                         goBackReceived(message);
                         break;
                     }
@@ -115,9 +113,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void calculatorReceived(Message message) {
         Long chatId = message.getChatId();
-        log.info("[pre-calculator] received by user with chatId={}(username={}), waiting for expression",chatId,
+        log.info("[pre-calculator] received by user with chatId={}(username={}), waiting for expression", chatId,
                 message.getChat().getUserName());
-        sendMessage( ENTER_EXPRESSION, message);
+        sendMessage(ENTER_EXPRESSION, message);
         setUserState(chatId, WAITING_EXPRESSION);
     }
 
@@ -132,35 +130,37 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void notSupportedReceived(Message message) {
         log.info("[NOT_SUPPORTED] received by user with chatId={}(username={})", message.getChatId(),
                 message.getChat().getUserName());
-        sendMessage( COMMAND_NOT_AVAILABLE, message);
+        sendMessage(COMMAND_NOT_AVAILABLE, message);
     }
 
     private void getWeather(Message message) {
         Long chatId = message.getChatId();
         log.info("[weather] City received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
-        sendMessage( weatherService.getWeather(message.getText()), message);
+        sendMessage(weatherService.getWeather(message.getText()), message);
     }
 
     private void aboutReceived(Message message) {
         log.info("[about] received by user with chatId={}", message.getChatId());
-        sendMessage( CREATED_BY, message);
+        sendMessage(CREATED_BY, message);
     }
+
     private void startReceived(Message message) {
         log.info("[start] received by user with chatId={}(username={})", message.getChatId(),
                 message.getChat().getUserName());
         String answer = "Hello, " + message.getChat().getUserName() + INTRO;
         userService.save(message);
-        sendMessage( answer, message);
+        sendMessage(answer, message);
     }
 
     private BotState getUserState(Long chatId) {
-        log.info("Bot's state for user with chatId={} now is {}", chatId, BotState.DEFAULT);
-        return userStates.getOrDefault(chatId, BotState.DEFAULT);
+        BotState state = userStates.getOrDefault(chatId, BotState.DEFAULT);
+        log.info("[bot-state] Bot's state for user with chatId={} now is {}", chatId, state);
+        return state;
     }
 
     private void setUserState(Long chatId, BotState state) {
-        log.info("Bot's state for user with chatId={} now is {}", chatId, state);
+        log.info("[bot-state] Bot's state for user with chatId={} now is {}", chatId, state);
         userStates.put(chatId, state);
     }
 
