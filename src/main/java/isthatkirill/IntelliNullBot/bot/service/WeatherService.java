@@ -19,8 +19,7 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.EMOJI;
 public class WeatherService {
 
     private final HttpService httpService;
-    private final String token = "b9a4ed35b7e0422a906153641230607";
-
+    private static final String token = "b9a4ed35b7e0422a906153641230607";
 
     public String getWeather(String city) {
         String response;

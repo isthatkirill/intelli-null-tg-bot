@@ -16,7 +16,7 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.LANGUAGES_COD
 @Service
 public class TranslatorService {
 
-    private final String token = "72abf95b687a8d2bbc8fbed66fc3a509e9bf23aa";
+    private static final String token = "72abf95b687a8d2bbc8fbed66fc3a509e9bf23aa";
     // 08dbcac06195bf9b758b383d6a9c9bfad9b002b8
 
     @SneakyThrows

@@ -3,10 +3,7 @@ package isthatkirill.IntelliNullBot.bot.telegram;
 import com.vdurmont.emoji.EmojiParser;
 import isthatkirill.IntelliNullBot.bot.config.BotConfig;
 import isthatkirill.IntelliNullBot.bot.model.BotState;
-import isthatkirill.IntelliNullBot.bot.service.CalculatorService;
-import isthatkirill.IntelliNullBot.bot.service.TranslatorService;
-import isthatkirill.IntelliNullBot.bot.service.UserService;
-import isthatkirill.IntelliNullBot.bot.service.WeatherService;
+import isthatkirill.IntelliNullBot.bot.service.*;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +11,9 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -24,6 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +47,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Autowired
     private TranslatorService translatorService;
+
+    @Autowired
+    private MemeService memeService;
 
     private final BotConfig botConfig;
     private final Map<Long, BotState> userStates = new HashMap<>();
@@ -86,6 +89,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         historyReceived(message);
                     } else if ("Translate :page_facing_up:".equals(messageText)) {
                         translateReceived(message);
+                    } else if ("Meme :chicken:".equals(messageText)) {
+                        memeReceived(message);
                     } else {
                         notSupportedReceived(message);
                     }
@@ -95,14 +100,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                         goBackReceived(message);
                         break;
                     }
-                    getWeather(message);
+                    processWeather(message);
                     break;
                 case WAITING_EXPRESSION:
                     if (COMMANDS.contains(messageText)) {
                         goBackReceived(message);
                         break;
                     }
-                    solveExpression(message);
+                    processExpression(message);
                     break;
                 case WAITING_TEXT:
                     if (COMMANDS.contains(messageText)) {
@@ -142,7 +147,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         rowInline.add(InlineKeyboardButton.builder().text("RUS -> ENG").callbackData("RUS-ENG").build());
         rowInline.add(InlineKeyboardButton.builder().text("ENG -> RUS").callbackData("ENG-RUS").build());
-
         rowsInline.add(rowInline);
 
         rowInline = new ArrayList<>();
@@ -164,7 +168,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         return botConfig.getToken();
     }
 
-    private void solveExpression(Message message) {
+    private void memeReceived(Message message) {
+        Long chatId = message.getChatId();
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        InputFile inputFile = memeService.getMeme();
+        sendPhoto.setPhoto(inputFile);
+        userService.saveCall("/meme", " ", chatId, true);
+        executePhoto(sendPhoto);
+    }
+
+    private void processExpression(Message message) {
         Long chatId = message.getChatId();
         String text = message.getText();
         log.info("[calculator] Expression received by user with chatId={}(username={})", chatId,
@@ -173,7 +187,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(calculatorService.calculate(text), message);
     }
 
-    private void getWeather(Message message) {
+    private void processWeather(Message message) {
         Long chatId = message.getChatId();
         String text = message.getText();
         log.info("[weather] City received by user with chatId={}(username={})", chatId,
@@ -266,6 +280,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage.setText(textToSend);
         showButtons(message, sendMessage);
         executeMessage(sendMessage);
+    }
+
+    @SneakyThrows
+    private void executePhoto(SendPhoto sendPhoto) {
+        execute(sendPhoto);
     }
 
     @SneakyThrows
