@@ -1,6 +1,7 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -8,9 +9,11 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Random;
 
 @Slf4j
@@ -33,33 +36,23 @@ public class MemeService {
             while (imageURL.isBlank()) {
                 imageURL = randomURL();
             }
-            return convertToInputFile(downloadPhoto(imageURL));
+            return convertToInputFile(downloadPhoto(imageURL), LocalDateTime.now().toString());
         } catch (IOException e) {
             log.warn("[meme] Error then downloading photo");
             return null;
         }
     }
 
-    private InputFile convertToInputFile(File file) throws IOException {
-        FileInputStream inputStream = new FileInputStream(file);
-        InputFile inputFile = new InputFile(inputStream, file.getName());
-        Files.delete(Paths.get("src/main/resources/temp/" + file.getName()));
-        return inputFile;
+    private InputFile convertToInputFile(byte[] imageData, String fileName) {
+        InputStream inputStream = new ByteArrayInputStream(imageData);
+        return new InputFile(inputStream, fileName);
     }
 
-    private File downloadPhoto(String photoUrl) throws IOException {
+    private byte[] downloadPhoto(String photoUrl) throws IOException {
         URL url = new URL(photoUrl);
-        String generateFileName = System.currentTimeMillis() + ".jpg";
-        try (BufferedInputStream in = new BufferedInputStream(url.openStream());
-             FileOutputStream fileOutputStream =
-                     new FileOutputStream("src/main/resources/temp/ph" + generateFileName)) {
-            byte[] dataBuffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-                fileOutputStream.write(dataBuffer, 0, bytesRead);
-            }
+        try (InputStream in = new BufferedInputStream(url.openStream())) {
+            return IOUtils.toByteArray(in);
         }
-        return new File("src/main/resources/temp/ph" + generateFileName);
     }
 
 
