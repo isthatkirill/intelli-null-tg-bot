@@ -1,5 +1,6 @@
 package isthatkirill.IntelliNullBot.bot.telegram;
 
+import com.vdurmont.emoji.EmojiParser;
 import isthatkirill.IntelliNullBot.bot.config.BotConfig;
 import isthatkirill.IntelliNullBot.bot.model.BotState;
 import isthatkirill.IntelliNullBot.bot.service.CalculatorService;
@@ -48,9 +49,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private TranslatorService translatorService;
 
     private final BotConfig botConfig;
-
-    private Map<Long, BotState> userStates = new HashMap<>();
-    private Map<Long, String> textToTranslate = new HashMap<>();
+    private final Map<Long, BotState> userStates = new HashMap<>();
+    private final Map<Long, String> textToTranslate = new HashMap<>();
 
     @SneakyThrows
     public TelegramBot(BotConfig botConfig) {
@@ -66,7 +66,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
+            String messageText = EmojiParser.parseToAliases(update.getMessage().getText());
             Long chatId = update.getMessage().getChatId();
             Message message = update.getMessage();
 
@@ -76,15 +76,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case DEFAULT:
                     if ("/start".equals(messageText)) {
                         startReceived(message);
-                    } else if ("/weather".equals(messageText)) {
+                    } else if ("Weather :white_sun_behind_cloud_rain:".equals(messageText)) {
                         weatherReceived(message);
-                    } else if ("/calculator".equals(messageText)) {
+                    } else if ("Calculator :1234:".equals(messageText)) {
                         calculatorReceived(message);
-                    } else if ("/about".equals(messageText)) {
+                    } else if ("About :question:".equals(messageText)) {
                         aboutReceived(message);
-                    } else if ("/history".equals(messageText)) {
+                    } else if ("History :telescope:".equals(messageText)) {
                         historyReceived(message);
-                    } else if ("/translate".equals(messageText)) {
+                    } else if ("Translate :page_facing_up:".equals(messageText)) {
                         translateReceived(message);
                     } else {
                         notSupportedReceived(message);
@@ -123,7 +123,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             editedMessage.setChatId(String.valueOf(chatId));
             editedMessage.setMessageId(messageId);
 
-            editedMessage.setText(translatorService.translate(textToTranslate.get(chatId), callBackData, chatId));
+            userService.saveCall("/translate", textToTranslate.get(chatId), chatId, true);
+            editedMessage.setText(translatorService.translate(textToTranslate.get(chatId), callBackData));
             textToTranslate.remove(chatId);
 
             executeMessage(editedMessage);
@@ -165,22 +166,27 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void solveExpression(Message message) {
         Long chatId = message.getChatId();
+        String text = message.getText();
         log.info("[calculator] Expression received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
-        sendMessage(calculatorService.calculate(message.getText(), chatId), message);
+        userService.saveCall("/calculate", text, chatId, true);
+        sendMessage(calculatorService.calculate(text), message);
     }
 
     private void getWeather(Message message) {
         Long chatId = message.getChatId();
+        String text = message.getText();
         log.info("[weather] City received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
-        sendMessage(weatherService.getWeather(message.getText(), chatId), message);
+        userService.saveCall("/weather", text, chatId, true);
+        sendMessage(weatherService.getWeather(text), message);
     }
 
     private void calculatorReceived(Message message) {
         Long chatId = message.getChatId();
         log.info("[pre-calculator] received by user with chatId={}(username={}), waiting for expression", chatId,
                 message.getChat().getUserName());
+        userService.saveCall("/calculate", " ", chatId, false);
         sendMessage(ENTER_EXPRESSION, message);
         setUserState(chatId, WAITING_EXPRESSION);
     }
@@ -189,6 +195,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
         log.info("[pre-translate] received by user with chatId={}(username={}), waiting for text", chatId,
                 message.getChat().getUserName());
+        userService.saveCall("/translate", " ", chatId, false);
         sendMessage("Write the text that you need to translate", message);
         setUserState(chatId, WAITING_TEXT);
     }
@@ -197,6 +204,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
         log.info("[pre-weather] received by user with chatId={}(username={}), waiting for a city", chatId,
                 message.getChat().getUserName());
+        userService.saveCall("/weather", " ", chatId, false);
         sendMessage(ENTER_CITY, message);
         setUserState(chatId, WAITING_CITY);
     }
@@ -205,6 +213,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long chatId = message.getChatId();
         log.info("[Go back] received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
+        userService.saveCall("/go_back", " ", chatId, false);
         setUserState(chatId, BotState.DEFAULT);
         sendMessage(WHAT_DO_U_DO, message);
     }
@@ -216,21 +225,26 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void aboutReceived(Message message) {
-        log.info("[about] received by user with chatId={}", message.getChatId());
-        sendMessage(CREATED_BY, message);
+        Long chatId = message.getChatId();
+        log.info("[about] received by user with chatId={}", chatId);
+        userService.saveCall("/about", " ", chatId, true);
+        sendMessage(userService.getInfo(), message);
     }
 
     private void historyReceived(Message message) {
         Long chatId = message.getChatId();
         log.info("[history] received by user with chatId={}", chatId);
+        userService.saveCall("/history", " ", chatId, true);
         sendMessage(userService.getCallsByChatId(chatId), message);
     }
 
     private void startReceived(Message message) {
-        log.info("[start] received by user with chatId={}(username={})", message.getChatId(),
+        Long chatId = message.getChatId();
+        log.info("[start] received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
         String answer = "Hello, " + message.getChat().getUserName() + INTRO;
         userService.save(message);
+        userService.saveCall("/start", " ", chatId, true);
         sendMessage(answer, message);
     }
 
@@ -271,23 +285,24 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboardMarkup.setIsPersistent(true);
         List<KeyboardRow> keyboardRows = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        String text = message.getText();
+        String text = EmojiParser.parseToAliases(message.getText());
 
-        if (text.equals("/weather") || text.equals("/calculator") || text.equals("/translate")) {
-            row.add("Go back");
+        if (text.equals("Weather :white_sun_behind_cloud_rain:") || text.equals("Calculator :1234:") ||
+                text.equals("Translate :page_facing_up:")) {
+            row.add(EmojiParser.parseToUnicode("Go back :back:"));
             keyboardRows.add(row);
         } else if (!getUserState(message.getChatId()).name().equals(DEFAULT.name())) {
-            row.add("Go back");
+            row.add(EmojiParser.parseToUnicode("Go back :back:"));
             keyboardRows.add(row);
         } else {
-            row.add("/weather");
-            row.add("/meme");
-            row.add("/translate");
+            row.add(EmojiParser.parseToUnicode("Weather :white_sun_behind_cloud_rain:"));
+            row.add(EmojiParser.parseToUnicode("Meme :chicken:"));
+            row.add(EmojiParser.parseToUnicode("Translate :page_facing_up:"));
             keyboardRows.add(row);
             row = new KeyboardRow();
-            row.add("/calculator");
-            row.add("/history");
-            row.add("/about");
+            row.add(EmojiParser.parseToUnicode("Calculator :1234:"));
+            row.add(EmojiParser.parseToUnicode("History :telescope:"));
+            row.add(EmojiParser.parseToUnicode("About :question:"));
             keyboardRows.add(row);
         }
 

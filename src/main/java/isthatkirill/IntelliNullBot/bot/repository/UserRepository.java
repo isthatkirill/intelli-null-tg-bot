@@ -13,8 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static isthatkirill.IntelliNullBot.bot.util.StringConstants.FIND_CALLS_BY_ID;
-import static isthatkirill.IntelliNullBot.bot.util.StringConstants.FIND_USER_BY_ID;
+import static isthatkirill.IntelliNullBot.bot.util.StringConstants.*;
 
 @Slf4j
 @Repository
@@ -49,6 +48,7 @@ public class UserRepository {
         parameters.put("text", botCall.getText());
         parameters.put("called_at", botCall.getCalledAt());
         parameters.put("command", botCall.getCommand());
+        parameters.put("is_complete", botCall.getIsComplete());
 
         log.info("[db] Saving user's call chatId={} text={}", botCall.getChatId(), botCall.getText());
 
@@ -57,6 +57,14 @@ public class UserRepository {
 
     public List<BotCall> findCallsByChatId(Long chatId) {
         return jdbcTemplate.query(FIND_CALLS_BY_ID, Mappers.BOT_CALL_MAPPER, chatId);
+    }
+
+    public Long getNumberOfUsers() {
+        return jdbcTemplate.queryForObject(TOTAL_USERS, Long.class);
+    }
+
+    public Long getNumberOfCalls() {
+        return jdbcTemplate.queryForObject(TOTAL_CALLS, Long.class);
     }
 
     public boolean checkIfRegistered(Long chatId) {

@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS bot_calls (
 	command VARCHAR(255),
 	text VARCHAR(255),
 	called_at TIMESTAMP,
+	is_complete boolean,
     FOREIGN KEY (chat_id) REFERENCES users (chat_id)
 );

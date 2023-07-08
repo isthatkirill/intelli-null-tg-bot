@@ -1,13 +1,10 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
-import isthatkirill.IntelliNullBot.bot.aspect.TrackMethodCall;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -19,6 +16,9 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.LANGUAGES_COD
 @Service
 public class TranslatorService {
 
+    private final String token = "72abf95b687a8d2bbc8fbed66fc3a509e9bf23aa";
+    // 08dbcac06195bf9b758b383d6a9c9bfad9b002b8
+
     @SneakyThrows
     private String requestTranslation(String text, String lang) {
         JSONObject requestBody = new JSONObject();
@@ -28,7 +28,7 @@ public class TranslatorService {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.nlpcloud.io/v1/nllb-200-3-3b/translation"))
-                .header("Authorization", "Token 08dbcac06195bf9b758b383d6a9c9bfad9b002b8")
+                .header("Authorization", "Token " + token)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
                 .build();
@@ -38,9 +38,8 @@ public class TranslatorService {
         return json.getString("translation_text");
     }
 
-    @TrackMethodCall(value = "/translate", argNames = {"text", "chatId"})
-    public String translate(String text, String lang, Long chatId) {
-        log.info("[translator] User with chatId={} wants translate text={} into lang={}", chatId, text, lang);
+    public String translate(String text, String lang) {
+        log.info("[translator]  translate text={} into lang={}", text, lang);
         return requestTranslation(text, lang);
     }
 }

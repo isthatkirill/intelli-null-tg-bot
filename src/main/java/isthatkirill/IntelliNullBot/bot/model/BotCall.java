@@ -17,5 +17,6 @@ public class BotCall {
     String command;
     String text;
     LocalDateTime calledAt;
+    Boolean isComplete;
 
 }

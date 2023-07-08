@@ -13,7 +13,8 @@ public class StringConstants {
         "[+] addition\n[-] subtraction\n[*] multiplication\n[/] division\n[^] exponentiation\n[()] brackets");
 
     public static final String ENTER_CITY = EmojiParser
-            .parseToUnicode("Enter your city:cityscape:");
+            .parseToUnicode("Enter your city using english and i will send you the weather " +
+                    "forecast:cityscape:");
 
     public static final String COMMAND_NOT_AVAILABLE = EmojiParser
             .parseToUnicode("Such a command is not yet available!:confused:");
@@ -22,26 +23,28 @@ public class StringConstants {
             .parseToUnicode("The bot is created by @isthatkirill:revolving_hearts:");
 
     public static final String INTRO = EmojiParser
-            .parseToUnicode(", nice too meet уou! What do you want to do?:eyes:\n\n" +
-                    "/weather - find out the weather in any city\n" +
-                    "/calculator - solve the expression\n" +
-                    "/history - look at the last 10 uses of me\n" +
-                    "/translate - translating text");
+            .parseToUnicode(", nice too meet уou! What do you want to do?:eyes:");
 
     public static final String START = "Start the bot!";
 
     public static final String WHAT_DO_U_DO = EmojiParser
             .parseToUnicode("What do you want to do?:eyes:");
 
-    public static final List<String> COMMANDS = List.of("/start", "/weather", "/calculator",
-            "Go back", "/about", "/history", "/translate");
+    public static final List<String> COMMANDS = List.of("/start", "Weather :white_sun_behind_cloud_rain:",
+            "Calculator :1234:", "Go back :back:", "About :question:", "History :telescope:",
+            "Translate :page_facing_up:", "Meme :chicken:");
 
     public static final String FIND_USER_BY_ID = "SELECT COUNT(*) FROM users WHERE chat_id = ?";
+
+    public static final String TOTAL_CALLS = "SELECT COUNT(*) FROM bot_calls";
+
+    public static final String TOTAL_USERS = "SELECT COUNT(*) FROM users";
 
     public static final String FIND_CALLS_BY_ID = "SELECT b.* " +
             "FROM bot_calls b " +
             "JOIN users u ON b.chat_id = u.chat_id " +
-            "WHERE b.chat_id = ? " +
+            "WHERE b.chat_id = ? AND " +
+            "b.is_complete = true " +
             "ORDER BY b.called_at DESC " +
             "LIMIT 10";
 

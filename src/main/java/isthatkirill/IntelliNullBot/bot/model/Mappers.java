@@ -11,6 +11,7 @@ public class Mappers {
                 .command(rs.getString("command"))
                 .text(rs.getString("text"))
                 .calledAt(rs.getTimestamp("called_at").toLocalDateTime())
+                .isComplete(rs.getBoolean("is_complete"))
                 .build();
 
 }

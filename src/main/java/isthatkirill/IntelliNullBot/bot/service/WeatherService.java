@@ -1,7 +1,6 @@
 package isthatkirill.IntelliNullBot.bot.service;
 
 import com.vdurmont.emoji.EmojiParser;
-import isthatkirill.IntelliNullBot.bot.aspect.TrackMethodCall;
 import isthatkirill.IntelliNullBot.bot.util.HttpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,14 +19,15 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.EMOJI;
 public class WeatherService {
 
     private final HttpService httpService;
+    private final String token = "b9a4ed35b7e0422a906153641230607";
 
-    @TrackMethodCall(value = "/weather", argNames = {"city", "chatId"})
-    public String getWeather(String city, Long chatId) {
+
+    public String getWeather(String city) {
         String response;
         try {
             response =
                     httpService.makeHttpRequest("http://api.weatherapi.com/v1/" +
-                            "forecast.json?key=b9a4ed35b7e0422a906153641230607&q=" + city + "&days=3&aqi=no&alerts=no");
+                            "forecast.json?key=" + token + "&q=" + city + "&days=3&aqi=no&alerts=no");
             return parse(response);
         } catch (HttpClientErrorException e) {
             log.warn("[weather] There is no such city or API doesnt response");
