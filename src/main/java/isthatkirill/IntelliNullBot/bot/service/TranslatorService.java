@@ -17,7 +17,7 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.LANGUAGES_COD
 public class TranslatorService {
 
     private static final String token = "72abf95b687a8d2bbc8fbed66fc3a509e9bf23aa";
-    // 08dbcac06195bf9b758b383d6a9c9bfad9b002b8
+    // 08dbcac06195bf9b758b383d6a9c9bfad9b002b8 <-- use this if the upper doesn't work
 
     @SneakyThrows
     private String requestTranslation(String text, String lang) {

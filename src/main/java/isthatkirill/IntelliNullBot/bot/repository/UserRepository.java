@@ -68,7 +68,6 @@ public class UserRepository {
     }
 
     public boolean checkIfRegistered(Long chatId) {
-
         return jdbcTemplate.queryForObject(FIND_USER_BY_ID, Integer.class, chatId) == 1;
     }
 

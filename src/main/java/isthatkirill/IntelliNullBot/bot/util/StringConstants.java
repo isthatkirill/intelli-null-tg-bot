@@ -27,6 +27,8 @@ public class StringConstants {
 
     public static final String START = "Start the bot!";
 
+    public static final String SELECT_LANG = "Select a language available for translation: ";
+
     public static final String WHAT_DO_U_DO = EmojiParser
             .parseToUnicode("What do you want to do?:eyes:");
 

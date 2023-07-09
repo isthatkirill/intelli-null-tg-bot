@@ -23,7 +23,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -139,7 +138,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void inlineButtonCall(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(message.getChatId()));
-        sendMessage.setText("Select a language available for translation: ");
+        sendMessage.setText(SELECT_LANG);
 
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
@@ -168,16 +167,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return botConfig.getToken();
     }
 
-    private void memeReceived(Message message) {
-        Long chatId = message.getChatId();
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setChatId(chatId);
-        InputFile inputFile = memeService.getMeme();
-        sendPhoto.setPhoto(inputFile);
-        userService.saveCall("/meme", " ", chatId, true);
-        executePhoto(sendPhoto);
-    }
-
     private void processExpression(Message message) {
         Long chatId = message.getChatId();
         String text = message.getText();
@@ -194,6 +183,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                 message.getChat().getUserName());
         userService.saveCall("/weather", text, chatId, true);
         sendMessage(weatherService.getWeather(text), message);
+    }
+
+    private void memeReceived(Message message) {
+        Long chatId = message.getChatId();
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(chatId);
+        InputFile inputFile = memeService.getMeme();
+        sendPhoto.setPhoto(inputFile);
+        userService.saveCall("/meme", " ", chatId, true);
+        executePhoto(sendPhoto);
     }
 
     private void calculatorReceived(Message message) {
@@ -233,8 +232,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void notSupportedReceived(Message message) {
-        log.info("[NOT_SUPPORTED] received by user with chatId={}(username={})", message.getChatId(),
+        Long chatId = message.getChatId();
+        log.info("[NOT_SUPPORTED] received by user with chatId={}(username={})", chatId,
                 message.getChat().getUserName());
+        userService.saveCall("NOT_SUPPORTED", " ", chatId, false);
         sendMessage(COMMAND_NOT_AVAILABLE, message);
     }
 
