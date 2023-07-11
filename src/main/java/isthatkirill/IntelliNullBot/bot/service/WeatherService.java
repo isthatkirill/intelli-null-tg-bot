@@ -19,14 +19,14 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.EMOJI;
 public class WeatherService {
 
     private final HttpService httpService;
-    private static final String token = "b9a4ed35b7e0422a906153641230607";
+    private static final String API_KEY = "b9a4ed35b7e0422a906153641230607";
 
     public String getWeather(String city) {
         String response;
         try {
             response =
                     httpService.makeHttpRequest("http://api.weatherapi.com/v1/" +
-                            "forecast.json?key=" + token + "&q=" + city + "&days=3&aqi=no&alerts=no");
+                            "forecast.json?key=" + API_KEY + "&q=" + city + "&days=3&aqi=no&alerts=no");
             return parse(response);
         } catch (HttpClientErrorException e) {
             log.warn("[weather] There is no such city or API doesnt response");

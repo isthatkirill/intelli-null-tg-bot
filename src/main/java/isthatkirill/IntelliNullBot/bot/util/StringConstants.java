@@ -13,7 +13,7 @@ public class StringConstants {
         "[+] addition\n[-] subtraction\n[*] multiplication\n[/] division\n[^] exponentiation\n[()] brackets");
 
     public static final String ENTER_CITY = EmojiParser
-            .parseToUnicode("Enter your city using english and i will send you the weather " +
+            .parseToUnicode("Enter your city or airport code and i will send you the weather " +
                     "forecast:cityscape:");
 
     public static final String COMMAND_NOT_AVAILABLE = EmojiParser

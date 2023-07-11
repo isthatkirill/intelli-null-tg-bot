@@ -16,7 +16,7 @@ import static isthatkirill.IntelliNullBot.bot.util.StringConstants.LANGUAGES_COD
 @Service
 public class TranslatorService {
 
-    private static final String token = "72abf95b687a8d2bbc8fbed66fc3a509e9bf23aa";
+    private static final String API_KEY = "72abf95b687a8d2bbc8fbed66fc3a509e9bf23aa";
     // 08dbcac06195bf9b758b383d6a9c9bfad9b002b8 <-- use this if the upper doesn't work
 
     @SneakyThrows
@@ -28,7 +28,7 @@ public class TranslatorService {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://api.nlpcloud.io/v1/nllb-200-3-3b/translation"))
-                .header("Authorization", "Token " + token)
+                .header("Authorization", "Token " + API_KEY)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
                 .build();
